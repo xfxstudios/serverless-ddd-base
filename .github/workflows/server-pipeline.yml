@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  # events: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+  #push:
+  pull_request:
+    types: 
+      - closed
+    branches:
+    - master   
+  #push:
+  #  branches:
+  #  - develop
+
+jobs:
+  if_merged:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:  
+          node-version: '18'
+      - name: deploy server
+        run: |
+          npm install
+          npm install -g serverless
+          npm install serverless-offline
+          serverless config credentials --overwrite --provider aws --key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          serverless deploy --stage ${{ secrets.DEV_ENV }}

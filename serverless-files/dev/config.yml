@@ -1,0 +1,24 @@
+environment:
+    NODE_ENV: "development"
+    APP_STAGE: ${self:provider.stage}
+    APP_NAME: ''
+    APP_VERSION: 1.0.0
+    COMPANY_NAME: ''
+    APP_PORT: 4000
+    REST_ROUTE_PREFIX: "/api"
+
+    #ProviderARNs:
+    #  AGENTS_POOL: arn:aws:cognito-idp:us-east-1:099076284075:userpool/us-east-1_XNL3eSKI5
+
+
+vpc:
+    securityGroupIds:
+        - sg-51d59654
+
+    # subnetIds:
+    #   - subnet-e7d656d6
+    #   - subnet-f2403d94
+    #   - subnet-8eb08780
+    #   - subnet-3ab5b877
+    #   - subnet-da1d66fb
+    #   - subnet-e6cdb3b9

@@ -1,0 +1,10 @@
+functions:
+  app:
+    handler: .dist/src/server.handler
+    events:
+      # - http:
+      #     path: /app/test
+      #     method: get
+      - http:
+          path: /{proxy+}
+          method: ANY

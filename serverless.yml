@@ -1,0 +1,90 @@
+service: my-serverless-app
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  timeout: 30
+  stage: ${opt:stage}
+  region: ${env:AWS_REGION, 'us-east-1'}
+  memorySize: 128
+  iamRoleStatements:
+    # - Effect: 'Allow'
+    #   Action:
+    #     - 'lambda:InvokeFunction'
+    #     - 'lambda:InvokeAsync'
+    #     - 'cognito:*'
+    #     - 'sqs:*'
+    #     - 's3:*'
+    #   Resource: '*'
+
+    # permite invocar una función Lambda específica (my-function) y restringe el acceso solo a esa función
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+        - lambda:InvokeAsync
+      Resource:
+        - arn:aws:lambda:us-east-1:123456789012:function:my-function
+    
+    # permite ciertas acciones en Amazon Cognito, como crear un usuario, obtener información de usuario y listar usuarios, pero solo para usuarios que tengan un tag de departamento igual a "engineering"
+    - Effect: Allow
+      Action:
+        - cognito:AdminCreateUser
+        - cognito:GetUser
+        - cognito:ListUsers
+        - cognito-idp:AdminCreateUser
+        - cognito-idp:AdminDeleteUser
+        - cognito-idp:AdminGetUser
+        - cognito-idp:AdminInitiateAuth
+        - cognito-idp:AdminRespondToAuthChallenge
+        - cognito-idp:ChangePassword
+        - cognito-idp:ForgotPassword
+        - cognito-idp:InitiateAuth
+        - cognito-idp:RespondToAuthChallenge
+      Resource:
+        - arn:aws:cognito-idp:us-east-1:123456789012:userpool/us-east-1_aBcDeFgH
+      Condition:
+        StringEquals:
+          "aws:PrincipalTag/department": "engineering"
+
+    # permite enviar mensajes a una cola de SQS específica (my-queue) pero solo si el origen del mensaje es la función Lambda especificada (my-function)
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+      Resource:
+        - arn:aws:sqs:us-east-1:123456789012:my-queue
+      Condition:
+        ArnLike:
+          "aws:SourceArn": "arn:aws:lambda:us-east-1:123456789012:function:my-function"
+    
+    # permite obtener objetos de un bucket de S3 (my-bucket) pero solo si la solicitud proviene de las direcciones IP especificadas (192.0.2.0/24 y 203.0.113.0/24)
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+      Resource:
+        - arn:aws:s3:::my-bucket/*
+      Condition:
+        IpAddress:
+          aws:SourceIp:
+            - "192.0.2.0/24"
+            - "203.0.113.0/24"
+
+  environment: ${file(${self:custom.config}):environment}
+
+functions: ${file(${self:custom.functions}):functions}
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  stage: ${opt:stage, self:provider.stage}
+  functions: serverless-files/${self:custom.stage}/functions.yml
+  config: serverless-files/${self:custom.stage}/config.yml
+  fullName: ${self:service}-${self:custom.stage}
+  serverless-offline:
+    httpPort: 4000
+
+package:
+  exclude:
+    - node_modules/**/aws-sdk/**
+    - node_modules/**/aws-lambda/**

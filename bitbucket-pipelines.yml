@@ -1,0 +1,53 @@
+image: node:16
+
+definitions:
+  steps:
+    - step: &development
+        name: build and deploy
+        caches: 
+          - node
+        script: 
+          - npm install
+          - npm install -g serverless
+          - npm install serverless-offline
+          - serverless config credentials --overwrite --provider aws --key $AWS_DEV__KEY --secret $AWS_DEV_SECRET
+          - serverless deploy --stage $DEV_ENV
+    
+    - step: &uat
+        name: build and deploy
+        caches: 
+          - node
+        script: 
+          - npm install
+          - npm install -g serverless
+          - npm install serverless-offline
+          - serverless config credentials --overwrite --provider aws --key $AWS_UAT_KEY --secret $AWS_UAT_SECRET
+          - serverless deploy --stage $UAT_ENV
+    
+    - step: &release
+        name: build and deploy
+        caches: 
+          - node
+        script: 
+          - npm install
+          - npm install -g serverless
+          - npm install serverless-offline
+          - serverless config credentials --overwrite --provider aws --key $AWS_RELEASE_KEY --secret $AWS_RELEASE_SECRET
+          - serverless deploy --stage $UAT_ENV
+
+pipelines:
+  pull-requests:
+    '**' : 
+      - step: *development
+  
+  branches:
+    develop:
+      - step: *development
+    uat:
+      - step: *uat
+    release:
+      - step: *release
+      #- step: 
+      #    <<: *deploy
+      #    name: deploy to dev
+      #    deployment: dev
